@@ -1,41 +1,41 @@
-from phi.playground import Playground, serve_playground_app
 from phi.agent import Agent
-from phi.llm.groq import Groq
-from phi.tools.duckduckgo import DuckDuckGo
+from phi.model.groq import Groq
 from phi.tools.yfinance import YFinanceTools
-from dotenv import load_dotenv
+from phi.tools.duckduckgo import DuckDuckGo
+from phi.playground import Playground,serve_playground_app
 
-# Load environment variables
+from dotenv import load_dotenv
+import os
+import phi 
+from phi.playground import Playground,serve_playground_app
+
 load_dotenv()
 
-# Create agents
-search_agent = Agent(
+phi.api=os.getenv("PHI_API_KEY")
+
+
+websearch_agent = Agent(
     name="Web Search Agent",
-    model=Groq(id="mixtral-8x7b-32768"),
+    model=Groq(id="llama-3.3-70b-versatile"),
     tools=[DuckDuckGo()],
     instructions=["Always include the sources"],
     show_tools=True,
     markdown=True,
 )
 
+## financial agent 
+
 finance_agent = Agent(
-    name="Finance Agent",
-    model=Groq(id="mixtral-8x7b-32768"),
-    tools=[YFinanceTools()],
-    instructions=["Use tables to display financial data"],
+    name = "Finance Agent",
+    model = Groq(id="llama-3.3-70b-versatile"),
+    tools=[YFinanceTools(stock_price=True, analyst_recommendations=True, stock_fundamentals=True,company_news=True)],
+    instructions=["Use tables to display the data"],
     show_tools=True,
     markdown=True,
+
 )
 
-# Create and serve playground
+app=Playground(agents=[finance_agent,websearch_agent]).get_app()
+
 if __name__ == "__main__":
-    playground = Playground(
-        agents=[search_agent, finance_agent],
-        display_name="Financial Research Assistant",
-        host="0.0.0.0",  # Allow external connections
-        port=7777,       # Specify port
-        api_base_url="http://localhost:7777"
-    )
-    serve_playground_app(playground,
-                         host="0.0.0.0",
-        port=7777)
+    serve_playground_app("playground:app",reload=True)
